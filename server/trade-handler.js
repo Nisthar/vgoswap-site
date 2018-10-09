@@ -6,7 +6,6 @@ const TradeOfferManager = require('steam-tradeoffer-manager');
 const request = require('request');
 
 const config = require(path.join(__dirname, '..', 'config', 'config.js'));
-const utils = require(path.join(__dirname, 'utils.js'));
 const database = require(path.join(__dirname, 'database', 'database.js'));
 
 const ExpressTrade = require('expresstrade');
@@ -117,9 +116,61 @@ function updateInventory() {
 	});
 }
 
+function isValidJson(json) {
+  let isValid = true;
+  try {
+    JSON.parse(json);
+  }
+  catch (err) {
+    console.error(err);
+    isValid = false;
+  }
+  finally {
+    return isValid;
+  }
+}
+
 module.exports = {
 	init: function () {
 		client.logOn(logOnOptions);
+	},
+  getBotVgoKeys: function(cb) {
+    ET.IUser.GetInventory((err, body) => {
+      if (err) {
+        cb(err);
+      } else {
+        if (body.status == 1) {
+          let invKeys = [];
+					body.response.items.forEach(function (item) {
+						if (item.name === 'WAX Key') {
+							invKeys.push(item.id);
+						}
+					});
+					cb(null, invKeys);
+        } else {
+          cb(new Error(body.message));
+        }
+      }
+    });
+  },
+  getVgoKeysForTrade: function(amount, cb) {
+		ET.IUser.GetInventory((err, body) => {
+      if (err) {
+        cb(err);
+      } else {
+        if (body.status == 1) {
+          let invKeys = [];
+					body.response.items.forEach(function (item) {
+						if (item.name === 'WAX Key') {
+							invKeys.push(item.id);
+						}
+					});
+					cb(null, invKeys.slice(0, amount));
+        } else {
+          cb(new Error(body.message));
+        }
+      }
+    });
 	},
 	getKeysInVgoInventory: function(steamid, cb) {
 		ET.ITrade.GetUserInventoryFromSteamId({steam_id: steamid, app_id: 1, search: 'WAX Key'}, (err, body) => {
@@ -130,7 +181,7 @@ module.exports = {
 				if (body.status == 1) {
 					let theirInvKeys = [];
 					body.response.items.forEach(function (item) {
-						if (item.category === 'WAX Key') {
+						if (item.name === 'WAX Key') {
 							theirInvKeys.push(item.id);
 						}
 					});
@@ -301,7 +352,7 @@ module.exports = {
 								});
 								cb(null, acceptedOffers, failedOffers);
 							} else {
-								cb(new Error(body.message));
+								cb(new Error(response.message));
 							}
 						}
 					});
@@ -334,7 +385,7 @@ module.exports = {
 				cb(err);
 			}
 			else {
-				if (utils.isValidJson(body)) {
+				if (isValidJson(body)) {
 					let realBody = JSON.parse(body);
 					if (realBody.status == 1) {
             cb(null, realBody.response.transfer_id);

@@ -936,17 +936,14 @@ io.on('connection', socket => {
 										else {
 											if (balance >= parseFloat((amount * config.rates.vgoBuyPrice).toFixed(2))) {
 												if (amount <= vgoKeysInStock) {
-                          database.getVgoKeysForTrade(amount, (err, result) => {
+                          tradeHandler.getVgoKeysForTrade(amount, (err, result) => {
                             if (err) {
                               console.error(err);
                               socket.emit('alert', commonLogs.generalErr);
                               socket.emit('modalErrorFeedback', commonLogs.generalErr);
                             }
                             else {
-                              let keysToSend = [];
-                              result.forEach(function (key) {
-                                keysToSend.push(key.assetid);
-                              });
+                              let keysToSend = result;
                               if (result.length == amount) {
                                 let value = amount * config.rates.vgoBuyPrice;
                                 let offerMsg = `${config.siteName} - Trade for ${amount} keys / $${value.toFixed(2)}.`;
@@ -970,16 +967,7 @@ io.on('connection', socket => {
                                         sentKeys.push(item.id);
                                       });
                                       let afterValue = sentKeys.length * config.rates.vgoBuyPrice;
-                                      offer.response.offer.sender.items.forEach(function (item) {
-                                        database.addVgoInTrade(item.id, err => {
-                                          if (err) {
-                                            console.error(err);
-                                          }
-                                          else {
-                                            updateInStock();
-                                          }
-                                        });
-                                      });
+                                      updateInStock();
                                       let keyLength = sentKeys.length;
                                       database.updateBalanceBySteamId(socketuser.steamid, afterValue * -1, err => {
                                         if (err) {
@@ -1315,7 +1303,7 @@ function checkTf2Offers() {
 							let keys = failedOffer.itemsToGive.length;
 							let value = failedOffer.itemsToGive.length * config.rates.tf2BuyPrice;
 							console.log(`[CANCELLED BUY] ${realSteamid} - ${keys} TF2 - $${value}`);
-							emitAlertToClient(realSteamid, `TF2 Buy offer cancelled`);
+							emitAlertToClient(realSteamid, `TF2 Sell offer cancelled`);
 
 							// For a failed buy offer, we must refund the user, delete
 							// the offer, and restore the keys in stock.
@@ -1412,17 +1400,7 @@ function checkVgoOffers() {
 											console.error(err);
 										}
 									});
-									// Unlike Steam, up-to-date assetids are provided in the 
-									// offer receipt, so we'll use them now.
-									keyArr.forEach(function (key) {
-										database.insertVgoKey(key.id, err => {
-											if (err) {
-												console.error(err);
-											} else {
-												updateInStock();
-											}
-										});
-									});
+                  updateInStock();
 									console.log(`[SUCCESS SELL] ${realSteamid} sold ${keys} VGO keys ($${value.toFixed(2)})`);
 									emitAlertToClient(realSteamid, `Successfully sold ${keys} VGO keys ($${value.toFixed(2)})`);
 									// Update the balance of the real account
@@ -1464,16 +1442,6 @@ function checkVgoOffers() {
 									assert(result.affectedRows, `Offer not deleted from open offers`);
 								}
 							});
-							
-							// We can delete the keys from the database - they
-							// have been successfully traded away
-							keyArr.forEach(function (key) {
-								database.deleteVgoKey(key.id, err => {
-									if (err) {
-										console.error(err);
-									}
-								});
-							});
 						}
 					}
 				});
@@ -1511,19 +1479,7 @@ function checkVgoOffers() {
 							console.log(`[CANCELLED BUY] ${realSteamid} - ${keys} VGO - $${value}`);
 							emitAlertToClient(realSteamid, `VGO Buy offer cancelled`);
 							
-							// This adds the keys back to the site
-							// stock database, tracked by the
-							// 'intrade' column
-							keyArr.forEach(function (key) {
-								database.revertVgoInTrade(key.id, err => {
-									if (err) {
-										console.error(err);
-									}
-									else {
-										updateInStock();
-									}
-								});
-							});
+              updateInStock();
 							// Delete the open offer from database
 							database.deleteOpenVgoOffer(failedOffer.id, (err, result) => {
 								if (err) {

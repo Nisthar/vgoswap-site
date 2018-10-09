@@ -1,20 +1,8 @@
 const path = require('path');
 const database = require(path.join(__dirname, 'database', 'database.js'));
+const tradeHandler = require(path.join(__dirname, 'trade-handler'));
 
 module.exports = {
-	isValidJson: function (json) {
-		let isValid = true;
-		try {
-			JSON.parse(json);
-		}
-		catch (err) {
-			console.error(err);
-			isValid = false;
-		}
-		finally {
-			return isValid;
-		}
-	},
 	getIsoString: function () {
 		return new Date().toISOString().split('.')[0] + "Z";
 	},
@@ -41,13 +29,13 @@ module.exports = {
 			if (err) {
 				cb(err);
 			} else {
-				database.getVgoKeysInStock((err, vgo) => {
+				tradeHandler.getBotVgoKeys((err, vgo) => {
 					if (err) {
 						cb(err);
 					} else {
 						cb(null, {
 							tf2: tf2,
-							vgo: vgo
+							vgo: vgo.length
 						});
 					}
 				});

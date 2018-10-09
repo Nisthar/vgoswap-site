@@ -1,6 +1,6 @@
-let tf2SellPrice = 1.50;
+let tf2SellPrice = 1.40;
 let vgoSellPrice = 2.30;
-let tf2BuyPrice = 1.59;
+let tf2BuyPrice = 1.49;
 let vgoBuyPrice = 2.39;
 
 let pageLoaderHTML = `

@@ -58,15 +58,6 @@ module.exports = {
 			}
 		});
 	},
-	getVgoKeysInStock: function(cb) {
-		connection.query(`SELECT COUNT(assetid) AS count FROM vgokeys WHERE intrade IS NULL`, (err, result) => {
-			if (err) {
-				cb(err);
-			} else {
-				cb(null, result[0].count);
-			}
-		});
-	},
 	getUserBySteamId: function(steamid, cb) {
 		connection.query(`SELECT * FROM users WHERE steamid = ?`, [steamid], (err, result) => {
 			if (err) {
@@ -240,15 +231,6 @@ module.exports = {
 			}
 		});
 	},
-	insertVgoKey: function(id, cb) {
-		connection.query(`INSERT INTO vgokeys (assetid) VALUES (?) ON DUPLICATE KEY UPDATE assetid = ?`, [id, id], err => {
-			if (err) {
-				cb(err);
-			} else {
-				cb(null);
-			}
-		});
-	},
 	insertTf2Key: function(id, cb) {
 		connection.query(`INSERT INTO tf2keys (assetid) VALUES (?) ON DUPLICATE KEY UPDATE assetid = ?`, [id, id], err => {
 			if (err) {
@@ -277,25 +259,6 @@ module.exports = {
 			}
 		});
 	},
-	getVgoKeysForTrade: function(limit, cb) {
-		connection.query(`SELECT * FROM vgokeys WHERE intrade IS NULL LIMIT ?`, [limit], (err, result) => {
-			if (err) {
-				cb(err);
-			} else {
-				cb(null, result);
-			}
-		});
-	},
-	addVgoInTrade: function(assetid, cb) {
-		connection.query(`UPDATE vgokeys SET intrade = ? WHERE assetid = ?`, ['Yes', assetid], err => {
-			if (err) {
-				cb(err);
-			}
-			else {
-				cb(null);
-			}
-		});
-	},
 	revertTf2InTrade: function(assetid, cb) {
 		connection.query(`UPDATE tf2keys SET intrade = ? WHERE assetid = ?`, [null, assetid], err => {
 			if (err) {
@@ -306,27 +269,8 @@ module.exports = {
 			}
 		});
 	},
-	revertVgoInTrade: function(assetid, cb) {
-		connection.query(`UPDATE vgokeys SET intrade = ? WHERE assetid = ?`, [null, assetid], err => {
-			if (err) {
-				cb(err);
-			}
-			else {
-				cb(null);
-			}
-		});
-	},
 	deleteTf2Key: function(assetid, cb) {
 		connection.query(`DELETE FROM tf2keys WHERE assetid = ?`, [assetid], err => {
-			if (err) {
-				cb(err);
-			} else {
-				cb(null);
-			}
-		});
-	},
-	deleteVgoKey: function(assetid, cb) {
-		connection.query(`DELETE FROM vgokeys WHERE assetid = ?`, [assetid], err => {
 			if (err) {
 				cb(err);
 			} else {
